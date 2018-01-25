@@ -125,3 +125,21 @@ GET /get_state?job_id=1234
 ```
 
 # CLI Tools
+
+There is an admin tool that consists of subcommands for manipulating ingest processes.
+
+## Job Subcommand
+
+The job subcommand allows administrators to directly manipulate the state of a job. Due
+to complex computing environments some jobs may get "stuck" and get to a state where
+they aren't failed and aren't progressing. This may happen for any number of reasons but
+the solution is to manually fail the job.
+
+```sh
+IngestCMD job \
+    --job-id 1234 \
+    --state FAILED \
+    --task 'ingest files' \
+    --task-percent 0.0 \
+    --exception 'Failed by adminstrator'
+```

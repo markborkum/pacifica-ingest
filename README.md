@@ -22,9 +22,13 @@ Ingest and validate data from the pacifica-uploader
 This code depends on the following libraries and python modules:
 
 Docker/docker-compose
+
 Peewee
+
 Celery
+
 MySQL-Python
+
 This is a standard python distutils build process.
 
 ```
@@ -38,14 +42,86 @@ To bring up a test instance use docker-compose
 
 ```
 docker-compose up
+```
 
-test
+# Bundle Format
+
+The bundle format is parsed using Python [tarfile](https://docs.python.org/2/library/tarfile.html)
+with some additions. The metadata is kept in a file in the bundle as well as the data. The
+metadata is put in a file called `metadata.txt` and is JSON formatted. The data is put under the
+directory `data` in the bundle so it does not have name conflicts with the `metadata.txt` file.
+
+So an example bundle as shown by running `tar -tf` on it is as follows:
+```
+data/a/b/foo.txt
+data/a/c/bar.txt
+metadata.txt
 ```
 
 # API Examples
 
-All calls to the data ingest service are based on a unique ID.
+The endpoints that define the ingest process are as follows. The assumption is that the installer
+knows the IP address and port the WSGI service is listening on.
+
+## Ingest (Single HTTP Request)
+
+Post a bundle ([defined above](#bundle-format)) to the endpoint.
 
 ```
-MY_INGEST_UUID=`uuidgen`
+POST /ingest
+... tar bundle as body ...
 ```
+
+The response will be the job ID information as if you requested it directly.
+
+```json
+{
+  "job_id": 1234,
+  "state": "OK",
+  "task": "UPLOADING",
+  "task_percent": "0.0",
+  "updated": "2018-01-25 16:54:50",
+  "created": "2018-01-25 16:54:50",
+  "exception": ""
+}
+```
+
+Failures that exist with this endpoint are during the course of uploading the bundle.
+Sending data to this endpoint should consider long drawn out HTTP posts that maybe
+longer than clients are used to handling.
+
+## Get State for Job
+
+Using the `job_id` field from the HTTP response from an ingest.
+
+```json
+GET /get_state?job_id=1234
+{
+  "job_id": 1234,
+  "state": "OK",
+  "task": "ingest files",
+  "task_percent": "0.0",
+  "updated": "2018-01-25 17:00:32",
+  "created": "2018-01-25 16:54:50",
+  "exception": ""
+}
+```
+
+As the bundle of data is being processed errors may occure, if that happens the following
+will be returned. It is useful when consuming this endpoint to plan for failures. Consider
+logging or showing a message visable to the user that shows the ingest failed.
+
+```json
+GET /get_state?job_id=1234
+{
+  "job_id": 1234,
+  "state": "FAILED",
+  "task": "ingest files",
+  "task_percent": "0.0",
+  "updated": "2018-01-25 17:01:02",
+  "created": "2018-01-25 16:54:50",
+  "exception": "... some crazy python back trace ..."
+}
+```
+
+# CLI Tools

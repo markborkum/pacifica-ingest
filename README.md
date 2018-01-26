@@ -61,17 +61,24 @@ Test the new instance using the `test` command:
 test
 ```
 
-# Bundle Format
+## Bundle Format
 
-The bundle format is parsed using Python [tarfile](https://docs.python.org/2/library/tarfile.html)
-with some additions. The metadata is kept in a file in the bundle as well as the data. The
-metadata is put in a file called `metadata.txt` and is JSON formatted. The data is put under the
-directory `data` in the bundle so it does not have name conflicts with the `metadata.txt` file.
+The bundle format is parsed using the [tarfile](https://docs.python.org/2/library/tarfile.html)
+package from the Python standard library.
 
-So an example bundle as shown by running `tar -tf` on it is as follows:
+Both data and metadata are stored in a bundle. Metadata is stored in the
+`metadata.txt` file (JSON format). Data is stored in the `data/` directory.
+
+To display the contents of a bundle using the `tar` command:
+```bash
+tar -tf mybundle.tar.gz
 ```
-data/a/b/foo.txt
-data/a/c/bar.txt
+
+For example, the contents of `mybundle.tar.gz` is:
+```
+data/mywork/project/proposal.doc
+data/mywork/experiment/results.csv
+data/mywork/experiment/results.doc
 metadata.txt
 ```
 
